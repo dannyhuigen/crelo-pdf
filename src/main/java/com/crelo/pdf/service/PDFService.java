@@ -8,22 +8,31 @@ import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.canvas.PdfCanvas;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class PDFService {
 
-    @PostConstruct
-    public void test() throws IOException {
+    @Autowired FirebaseService firebaseService;
 
-        PdfReader reader = new PdfReader("src/main/resources/template.pdf");
-        PdfWriter writer = new PdfWriter("src/main/resources/template-modified.pdf");
+    @PostConstruct
+    public void test() throws IOException, ExecutionException, InterruptedException {
+
+        PdfReader reader = new PdfReader("src/main/resources/pdf_templates/template.pdf");
+        PdfWriter writer = new PdfWriter("src/main/resources/pdf_templates/template-modified.pdf");
         PdfDocument pdfDocument = new PdfDocument(reader, writer);
         addContentToDocument(pdfDocument);
         pdfDocument.close();
 
+        generateFromLijstInvulling("IrkF2rsoRHR8gYAjy8nS");
+    }
+
+    public void generateFromLijstInvulling(String lijstInvullingId) throws ExecutionException, InterruptedException, IOException {
+        firebaseService.get(lijstInvullingId);
     }
 
     public void addContentToDocument(PdfDocument pdfDocument) throws IOException {

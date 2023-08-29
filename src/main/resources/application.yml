@@ -1,0 +1,7 @@
+server:
+  port: 5612
+
+fireBase:
+  collection: lijstInvulling
+  dbBaseUrl: https://en-meer.firebaseio.com
+  authFileLocation: key.json
