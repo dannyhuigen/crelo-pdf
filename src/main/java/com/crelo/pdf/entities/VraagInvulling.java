@@ -13,7 +13,9 @@ public class VraagInvulling {
 
     String eigenschap;
     String ingevuldDoor;
-    String eigenschap;
     int invulling;
 
+    public int getInvulling() {
+        return invulling + 1;
+    }
 }

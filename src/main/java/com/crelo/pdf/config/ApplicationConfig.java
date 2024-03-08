@@ -16,7 +16,5 @@ public class ApplicationConfig {
     @Value("${fireBase.collection}")
     private String collectionName;
 
-    @Value("${fireBase.authFileLocation}")
-    private String authFileLocation;
 
 }

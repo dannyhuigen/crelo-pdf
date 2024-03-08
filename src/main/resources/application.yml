@@ -1,7 +1,22 @@
 server:
   port: 5612
+#  ssl:
+#    key-store: /etc/letsencrypt/live/doc.crelo.app/keystore.p12
+#    key-store-password: tyco
+#    keyStoreType: PKCS12
+#    keyAlias: tomcat
+
+security:
+#  require-ssl: true
+  basic:
+    enabled: false
+
+pdfLoc: "/home/danny/pdfs/"
 
 fireBase:
   collection: lijstInvulling
   dbBaseUrl: https://en-meer.firebaseio.com
   authFileLocation: key.json
+
+
+

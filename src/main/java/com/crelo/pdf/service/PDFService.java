@@ -1,52 +1,92 @@
 package com.crelo.pdf.service;
 
-import com.itextpdf.kernel.font.PdfFont;
-import com.itextpdf.kernel.font.PdfFontFactory;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfPage;
-import com.itextpdf.kernel.pdf.PdfReader;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.kernel.pdf.canvas.PdfCanvas;
-import jakarta.annotation.PostConstruct;
+
+import com.crelo.pdf.entities.LijstInvulling;
+import com.crelo.pdf.entities.TotalScore;
+import com.crelo.pdf.entities.pojos.LLO;
+import com.crelo.pdf.service.pages.GoodBadService;
+import com.crelo.pdf.service.pages.TotalsService;
+import com.crelo.pdf.service.pages.VoorbladService;
+import com.spire.doc.Document;
+import com.spire.doc.FileFormat;
+import com.spire.doc.collections.SectionCollection;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
+import java.io.*;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * Service responsible for generating the pdf itself
+ */
 @Service
 public class PDFService {
 
-    @Autowired FirebaseService firebaseService;
+    @Value("${pdfLoc}")
+    String pdfloc;
 
-    @PostConstruct
-    public void test() throws IOException, ExecutionException, InterruptedException {
+    @Autowired
+    FirebaseService firebaseService;
 
-        PdfReader reader = new PdfReader("src/main/resources/pdf_templates/template.pdf");
-        PdfWriter writer = new PdfWriter("src/main/resources/pdf_templates/template-modified.pdf");
-        PdfDocument pdfDocument = new PdfDocument(reader, writer);
-        addContentToDocument(pdfDocument);
-        pdfDocument.close();
+    @Autowired
+    PictureService pictureService;
 
-        generateFromLijstInvulling("IrkF2rsoRHR8gYAjy8nS");
+    @Autowired
+    GoodBadService goodBadService;
+
+    @Autowired
+    VoorbladService voorbladService;
+
+    @Autowired
+    TotalsService totalsService;
+
+    public void produce(String id, LLO llo) throws IOException, ExecutionException, InterruptedException {
+        LijstInvulling lijstInvulling = firebaseService.get(id, llo);
+        Document document = new Document();
+        addSections(voorbladService.getVoorbladen(lijstInvulling, llo), document);
+        addSections(goodBadService.getGood(lijstInvulling, llo), document);
+        addSections(goodBadService.getBad(lijstInvulling, llo), document);
+        addSections(totalsService.createTotals(lijstInvulling), document);
+        document.saveToFile(String.format(pdfloc + "%s.docx", id), FileFormat.Docx);
+        convertToPdf(String.format(pdfloc + "%s.docx", id));
     }
 
-    public void generateFromLijstInvulling(String lijstInvullingId) throws ExecutionException, InterruptedException, IOException {
-        firebaseService.get(lijstInvullingId);
+    public Document addSections(SectionCollection sectionCollection, Document document) {
+        for (int i = 0; i < sectionCollection.getCount(); i++) {
+            document.getSections().add(sectionCollection.get(i).deepClone());
+        }
+        return document;
     }
 
-    public void addContentToDocument(PdfDocument pdfDocument) throws IOException {
-        PdfFont font = PdfFontFactory.createFont();
+    public void convertToPdf(String docxFile) throws IOException {
+        String outputDir = pdfloc;
+        try {
+            ArrayList<String> command = new ArrayList<>();
+            command.add("libreoffice");
+            command.add("--headless");
+            command.add("--convert-to");
+            command.add("pdf");
+            command.add(docxFile);
+            command.add("--outdir");
+            command.add(outputDir);
 
-        PdfPage lastPage = pdfDocument.getLastPage();
-        PdfCanvas canvas = new PdfCanvas(lastPage);
+            // Create a process builder and start the process
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            Process process = processBuilder.start();
 
-        canvas.beginText()
-                .setFontAndSize(font, 12)
-                .moveText(100, 100) // Adjust the coordinates as needed
-                .showText("Hello, World!")
-                .endText();
+            // Wait for the process to finish
+            int exitCode = process.waitFor();
 
-        canvas.release();
+            if (exitCode == 0) {
+                System.out.println("Conversion completed successfully.");
+            } else {
+                System.err.println("Conversion failed with exit code: " + exitCode);
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
 }
