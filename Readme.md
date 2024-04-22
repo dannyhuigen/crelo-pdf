@@ -27,3 +27,15 @@ Build the jar (server executable)
 
 Copy from local machine to server<br>
 > scp -r "/home/danny/projects/robbin/pdf/target/pdf-0.0.1-SNAPSHOT.jar" "136.144.188.213:/home/danny"
+
+SSL:
+1. nieuwe SSL aanvragen:
+sudo certbot certonly --standalone
+tik "doc.crelo.app" als url in
+2. inloggen als SU:
+sudo -i
+3. naar certfile gaan:
+find / -type d -name "doc.crelo.app" && cd <dirname>"
+4. naar JAVA compatible format casten:
+openssl pkcs12 -export -in fullchain.pem -inkey privkey.pem -out keystore.p12 -name tomcat -CAfile chain.pem -caname root
+5. server restarten en profit xoxoxoxo
